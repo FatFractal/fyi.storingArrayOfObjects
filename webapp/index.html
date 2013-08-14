@@ -45,20 +45,23 @@
     )
   </h4>
   <div class="well" id="model-section">
-    <h2>The following Model is used with this post</h2>
-    <p>function Note() {<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;this.subject = null;<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;this.note = null;<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;return this;<br>
-      }
-    </p>
+    <h2>The following Model is used with this test application</h2>
+    <div class="well">
+      <p>function Note() {<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;this.subject = null;<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;this.note = null;<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;return this;<br>
+         }
+      </p>
+    </div>
 	<h4>Generate a bunch of notes in the client</h4>
+	<p>This will generate an array of Note objects that we will then store with a single API call.</p>
     <button id="gen-some-notes-button" class="btn" onclick="GenerateSomeNotes()">Generate Some Notes!</button>
     <p id = "generate-some-notes-data"></p>
   </div>
   <div class="well" id="server-extension-section">
     <h2>Server Extension</h2>
-    <p>This Server Extension will receive an array of Note objects and then store them to the backend.  The object and their metadata are then returned to the client.
+    <p>The above data will be sent to a Server Extension that will receive the array of Note objects and then store them to the backend with a single API call.  The object and their metadata are then returned to the client.
     </p>
 	<h4>
 	  The Server Extension code is (
@@ -67,10 +70,22 @@
       </a>
     )
     </h4>
-    <div class="well" id="note-input-section">
-      <button id="save-notes-button" class="btn" onclick="SaveABunchOfNotes()">Save them all in one go!</button>
-      <p id = "extension-response"></p>
+    <div class="well">
+       <p>function SaveABunchOfNotes() {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;ff.login("test_user", "T3st_Us3r", function() {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ff.postArrayToExtension(m_notes, "/ff/ext/storeArrayOfNotes", function(resp) {<br>
+	      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// handle success<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}, function(code, msg) {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// handle save error<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;}, function(code, msg) {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// handle login error<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+          }
+       </p>
     </div>
+    <button id="save-notes-button" class="btn" onclick="SaveABunchOfNotes()">Save them all in one go!</button>
+    <p id = "extension-response"></p>
   </div>
   <div class="well" id="get-all-notes">
     <h2>Get all the Note objects from the Notes collection</h2>
@@ -132,6 +147,7 @@
     }
   }
   function SaveABunchOfNotes() {
+	if(m_notes.length <=0) alert("Please create some data above first...")
     ff.login("test_user", "T3st_Us3r", function() {
       var el = document.getElementById('extension-response');
       ff.postArrayToExtension(m_notes, "/ff/ext/storeArrayOfNotes", function(resp) {
