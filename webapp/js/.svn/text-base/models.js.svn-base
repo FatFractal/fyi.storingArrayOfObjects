@@ -1,0 +1,269 @@
+var APP_TYPE_NOSERVER = "noserver";
+var APP_TYPE_RUBY = "ruby";
+var APP_TYPE_SERVLET = "servlet";
+
+var PRODUCT_TYPE_NOSERVER = "noserver";
+var PRODUCT_TYPE_PAAS = "servlet";
+
+function Account(data) {
+    this.clazz = "Account";
+    if (data) {
+        this.name           = data.name;
+        this.description    = data.description;
+        this.paymentMethods = data.paymentMethods;
+    } else {
+        this.name           = '';
+        this.description    = '';
+        this.paymentMethods = [];
+    }
+    return this;
+}
+
+function PaymentMethod(data) {
+    this.clazz = "PaymentMethod";
+    if (data) {
+        this.default            = data.default;
+        this.description        = data.description;
+        this.type               = data.type;
+        this.cardName           = data.cardName;
+        this.cardNum            = data.cardNum;
+        this.cardExpMonth       = data.cardExpMonth;
+        this.cardExpYear        = data.cardExpYear;
+        this.CVV2               = data.CVV2;
+        this.billingAddress     = data.billingAddress;
+        this.billingCity        = data.billingCity;
+        this.billingStateProv   = data.billingStateProv;
+        this.billingPostalCode  = data.billingPostalCode;
+        this.billingCountry     = data.billingCountry;
+    } else {
+        this.default            = false;
+        this.description        = null;
+        this.type               = null;
+        this.cardName           = null;
+        this.cardNum            = null;
+        this.cardExpMonth       = null;
+        this.cardExpYear        = null;
+        this.CVV2               = null;
+        this.billingAddress     = null;
+        this.billingCity        = null;
+        this.billingStateProv   = null;
+        this.billingPostalCode  = null;
+        this.billingCountry     = null;
+    }
+    return this;
+}
+
+function Subscription(data) {
+    this.clazz = "Subscription";
+
+    if (data) {
+        this.account        = data.account;
+        this.product        = data.product;
+        this.promoExpires   = data.promoExpires;
+        this.options        = data.options;
+        this.description    = data.description;
+    } else {
+        this.account        = new Account();
+        this.product        = new Product();
+        this.promoExpires   = null;
+        this.options        = [];
+        this.description    = null;
+    }
+    return this;
+}
+
+function Product(data) {
+    this.clazz = "Product";
+
+    if (data) {
+        this.type               = data.type;
+        this.isPromo            = data.isPromo;
+        this.description        = data.description;
+        this.price              = data.price;
+        this.allowances         = data.allowances;
+        this.availableOptions   = data.availableOptions;
+        this.runtimeOptions     = data.runtimeOptions;
+    } else {
+        this.type               = null;
+        this.isPromo            = false;
+        this.description        = null;
+        this.price              = null;
+        this.allowances         = [];
+        this.availableOptions   = [];
+        this.runtimeOptions     = [];
+    }
+
+    return this;
+}
+
+function Allowance(data) {
+    this.clazz = "Allowance";
+
+    if (data) {
+        this.type           = data.type;
+        this.amount         = data.amount;
+        this.unit           = data.unit;
+        this.perUnits       = data.perUnits;
+        this.overagePrice   = data.overagePrice;
+    } else {
+        this.type           = null;
+        this.amount         = 0;
+        this.perUnits       = [];
+    }
+
+    return this;
+}
+
+function SelectedOption(data) {
+    this.clazz = "SelectedOption";
+    if (data) {
+        this.type = data.type;
+        this.number = data.number;
+    } else {
+        this.type = null;
+        this.number = 0;
+    }
+    return this;
+}
+
+function Application(data) {
+    this.clazz = "Application";
+    if(data) {
+        this.context            = data.context;
+        if((!data.applicationType === undefined) || (!data.applicationType === null)) this.applicationType = data.applicationType; // noserver, ruby, servlet, fatfractal
+        else this.applicationType          = 0;
+        this.guid               = data.guid;
+        this.domain             = new Domain(data.domain);
+        this.subscription       = data.subscription;
+    } else {
+        this.context        = null;
+        this.applicationType           = null; // noserver, ruby, servlet, fatfractal
+        this.guid           = null;
+        this.domain         = new Domain();
+        this.subscription   = new Subscription();
+    }
+    return this;
+}
+
+var applicationType = {"NoServer":"noserver","Ruby":"ruby","Servlet":"servlet","FatFractal":"fatfractal"}
+
+function ApplicationDeployment() {
+   this.macAddress     = null;
+   this.ipAddress      = null;
+   this.port           = null;
+   this.databaseList   = [];
+   this.collectionList = [];
+   this.domain         = null;
+   this.context        = null;
+   this.externList     = null;
+   this.actionList     = null;
+   this.loggingContext = null;
+   this.type           = null;
+   this.developer      = null;
+   return this;
+}
+
+function Organization() {
+   this.clazz = "Organization";
+   this.name = null;
+   this.description = null;
+   //this.logo = new ArrayBuffer(0);
+   this.location = null;
+   return this;
+}
+
+function Invitation() {
+   this.clazz = "Invitation";
+   this.email = null;
+   this.message = null;
+   this.access = null;
+   this.status = null;
+   this.relatedTo = null;
+   return this;
+}
+
+function Message() {
+   this.clazz = "Message";
+   this.to = [];
+   this.subject = null;
+   this.body = null;
+   //this.attachment = new ArrayBuffer(0);
+   return this;
+}
+
+function SupportRequest() {
+   this.clazz = "SupportRequest";
+   this.subject = null;
+   this.body = null;
+   this.domain = null;
+   this.application = null;
+   this.status = null;
+   this.relatedTo = null;
+   this.authorProfile = null;
+   //this.attachment = new ArrayBuffer(0);
+   return this;
+}
+
+function Domain(data) {
+   this.clazz = "Domain";
+   if(data) {
+      this.guid = data.guid;
+      this.domain = data.domain;
+      this.imageSrc = '.' + data.ffUrl + '/logo';
+   } else {
+      this.domain = null;
+      this.description = null;
+      //this.logo = new ArrayBuffer(0);
+   }
+   return this;
+}
+
+function Comment() {
+   this.clazz = "Comment";
+   this.comment = null;
+   this.authorProfile = null;
+   return this;
+}
+
+function FatFractalId() {
+   this.port = null;
+   this.macAddress = null;
+   this.dSGeolocation = null;
+   return this;
+}
+function DSGeolocation() {
+   this.ipAddress    = null;
+   this.countryShort = null;
+   this.countryLong  = null;
+   this.state        = null;
+   this.city         = null;
+   this.zipCode      = null;
+   this.latitude     = null;
+   this.longitude    = null;
+   this.timeZone     = null;
+   return this;
+}
+function FatFractalMetadata() {
+   this.hostName = null;
+   this.ipAddress = null;
+   this.port = null;
+   this.activatedActions = [];
+   this.registeredCollections = [];
+   this.domain = null;
+   this.locale = null;
+   this.status = null;
+   this.access = null;
+   this.uuid = null;
+   this.macAddress = null;
+   this.javaVersion = null;
+   this.javaVendor = null;
+   this.osArch = null;
+   this.osName = null;
+   this.osVersion = null;
+   this.userName = null;
+   this.monitor = null;
+   this.configuration = new Properties();
+   this.applicationList = [];
+   return this;
+}
+

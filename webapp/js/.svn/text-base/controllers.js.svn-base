@@ -1,0 +1,352 @@
+'use strict';
+
+/* Controllers */
+function LoginCtrl($rootScope, $location, $dialog, $q, FatFractal) {
+    $rootScope.showLoginDialog = function(email, callback) {
+        $dialog.dialog({dialogFade: true, backdropFade: true, resolve: {providedEmail: function() { return email }}}).open('partials/login-dialog.html', 'LoginDialogCtrl')
+            .then(function(action) {
+                if (callback && $rootScope.loggedIn) {
+                    callback();
+                }
+                if (action == 'register') $rootScope.showRegisterDialog();
+            });
+    };
+
+    $rootScope.showRegisterDialog = function(email, callback) {
+        $dialog.dialog({dialogFade: true, backdropFade: true, resolve: {providedEmail: function() { return email }}}).open('partials/register-dialog.html', 'RegisterDialogCtrl')
+            .then(function(action) {
+                if (callback && $rootScope.loggedIn) {
+                    callback();
+                }
+                if (action == 'login') $rootScope.showLoginDialog();
+            });
+    };
+
+    $rootScope.completeLogin = function(user) {
+        $rootScope.loggedIn = true;
+        $rootScope.loggedInUser = user;
+        $rootScope.userName = user.userName;
+
+        refresh($rootScope, $q, FatFractal);
+        $q.all([$rootScope.applications, $rootScope.domains, $rootScope.receivedInvitations])
+            .then(function(_) {
+                var apps = _.shift(), doms = _.shift(), invs = _.shift();
+
+                if (!doms.length || !apps.length) {
+                    if (invs && invs.length > 0) {
+                        $location.url("/invitations/");
+                    } else {
+                        $location.url("/getting-started").search("gettingStarted", 1);
+                    }
+                } else {
+                    $location.url("/applications");
+                }
+            });
+    };
+
+    $rootScope.logout = function() {
+        FatFractal.logout()
+            .then(function() {
+                // TODO: update
+                $rootScope.loggedIn = false;
+                $rootScope.accounts = null;
+                $rootScope.accountsByGuid = null;
+                $rootScope.subscriptions = null;
+                $rootScope.subscriptionsByGuid = null;
+                $rootScope.applications = null;
+                $rootScope.applicationsByGuid = null;
+                $rootScope.domains = null;
+                $rootScope.domainsByGuid = null;
+                $rootScope.supportRequests = null;
+                $rootScope.supportRequestsByGuid = null;
+                $rootScope.invitationBox = null;
+                $rootScope.invitations = null;
+                $rootScope.sentInvitations = null;
+                $rootScope.receivedInvitations = null;
+                $rootScope.removedInvitations = null;
+                $rootScope.invitationsByGuid = null;
+
+                $rootScope.newInvitationCount = 0;
+
+                $location.url("/");
+            });
+    };
+
+    // TODO: make a directive
+    $rootScope.createdAt = function(obj) {
+        if (obj && obj.createdAt) {
+            var date = new Date(obj.createdAt);
+            return moment(date).fromNow();
+        } else {
+            return '';
+        }
+    };
+
+    $rootScope.loggedIn = FatFractal.loggedIn();
+    if ($rootScope.loggedIn) {
+        $rootScope.loggedInUser = FatFractal.loggedInUser();
+        $rootScope.userName = $rootScope.loggedInUser.userName;
+    } else {
+        $rootScope.userName = null;
+    }
+
+    // message stuff -- not sure it should go here, but don't know where else to put it :)
+    $rootScope.msg = null;
+    var persistMsg = false;
+    $rootScope.message = function(msg, type, persist) {
+        persist = persist || false;
+        if (persist) persistMsg = true;
+        $rootScope.msg = {msg: msg, type: type};
+    };
+    $rootScope.closeMsg = function() {
+        $rootScope.msg = null;
+    };
+    $rootScope.$on('$routeChangeSuccess', function() {
+        if (!persistMsg) {
+            $rootScope.closeMsg();
+        } else {
+            persistMsg = false;
+        }
+    });
+
+    $rootScope.subscriptionLabel = subscriptionLabel;
+
+    $rootScope.refreshing = false;
+
+    refresh($rootScope, $q, FatFractal);
+}
+
+function RootCtrl($rootScope) {
+    if (!$rootScope.loggedIn) {
+        $rootScope.showLoginDialog();
+    }
+}
+
+function MenuCtrl($scope, $rootScope, $location) {
+    $scope.locationBegins = function(str) {
+        return $location.path().indexOf(str) == 1;  // sic; 1 so that we skip the leading '/'
+    };
+
+    $rootScope.newInvitationCount = 0;
+    $scope.$watch('receivedInvitations', function(invs) {
+        if (invs) {
+            var newInvs = 0;
+            for (var i = 0; i < invs.length; i++) {
+                if (invs[i].status === STATUS_ADDED) newInvs++;
+            }
+            $rootScope.newInvitationCount = newInvs;
+        }
+    });
+
+    $scope.showMenu = function() {
+        return !$location.search().gettingStarted;
+    };
+}
+
+function MsgCtrl() {}
+
+
+/* Utility */
+function refresh(scope, $q, FatFractal) {
+    scope.refreshing = true;
+
+    // load user profile
+    if (scope.loggedInUser) {
+        FatFractal.getObjFromUri(scope.loggedInUser.ffUrl + "/BackReferences.Profile.ffUser")
+            .then(function(profile) {
+                scope.loggedInUserProfile = profile;
+            }, function(error) {
+                console.error("Error updating profile: " + error.message);
+            });
+    }
+
+    // load accounts, subscriptions, domains and applications
+    scope.accounts = FatFractal.getArrayFromUri("/Account", true);
+    scope.subscriptions = FatFractal.getArrayFromUri("/Subscription", true);
+    scope.domains = FatFractal.getArrayFromUri("/Domain?sort=domain", true);
+    scope.applications = FatFractal.getArrayFromUri("/Application?sort=context", true);
+
+    var accountsByGuidDeferred = $q.defer();
+    var subscriptionsByGuidDeferred = $q.defer();
+    var domainsByGuidDeferred = $q.defer();
+    var appsByGuidDeferred = $q.defer();
+    scope.accountsByGuid = accountsByGuidDeferred.promise;
+    scope.subscriptionsByGuid = subscriptionsByGuidDeferred.promise;
+    scope.domainsByGuid = domainsByGuidDeferred.promise;
+    scope.applicationsByGuid = appsByGuidDeferred.promise;
+
+    // load support box and requests
+    scope.supportRequests = FatFractal.getArrayFromUri("/SupportRequest", true);
+    var supportRequestsByGuidDeferred = $q.defer();
+    scope.supportRequestsByGuid = supportRequestsByGuidDeferred.promise;
+
+    scope.receivedInvitationsDeferred = $q.defer();
+    scope.sentInvitationsDeferred = $q.defer();
+    scope.removedInvitationsDeferred = $q.defer();
+    scope.invitationsByGuidDeferred = $q.defer();
+
+    scope.receivedInvitations = scope.receivedInvitationsDeferred.promise;
+    scope.sentInvitations = scope.sentInvitationsDeferred.promise;
+    scope.removedInvitations = scope.removedInvitationsDeferred.promise;
+    scope.invitationsByGuid = scope.invitationsByGuidDeferred.promise;
+
+    if (FatFractal.loggedIn()) {
+        var user = FatFractal.loggedInUser();
+
+        // load support box and update read time  TODO: why?
+        FatFractal.getObjFromUri(user.ffUrl + "/BackReferences.SupportBox")
+            .then(FatFractal.loadReferences)
+            .then(function(supportBox) {
+                if (supportBox) {
+                    FatFractal.postObjToExtension(supportBox, "readAtTimeStamp");
+                }
+            }, function(errCode, result) {
+                console.error(result.statusMessage);
+            });
+
+        // load invitations
+        scope.invitationBox = FatFractal.getObjFromUri(user.ffUrl + "/BackReferences.InvitationBox")
+            .then(FatFractal.loadReferences);
+        scope.invitationBox.then(function(box) {
+            if (box) {
+                // mark as read  TODO why?
+                FatFractal.postObjToExtension(box, "readAtTimeStamp");
+
+                // load invitations
+                scope.receivedInvitationsDeferred.resolve(FatFractal.getArrayFromUri(box.ffUrl + "/receivedInvitations", true));
+                scope.sentInvitationsDeferred.resolve(FatFractal.getArrayFromUri(box.ffUrl + "/sentInvitations", true));
+                scope.removedInvitationsDeferred.resolve(FatFractal.getArrayFromUri(box.ffUrl + "/removedInvitations", true));
+            } else {
+                scope.receivedInvitationsDeferred.resolve(null);
+                scope.sentInvitationsDeferred.resolve(null);
+                scope.removedInvitationsDeferred.resolve(null);
+            }
+        }, function(errCode, result) {
+            console.error(result.statusMessage);
+        });
+    } else {
+        scope.invitationBox = null;
+        scope.receivedInvitationsDeferred.resolve(null);
+        scope.sentInvitationsDeferred.resolve(null);
+        scope.removedInvitationsDeferred.resolve(null);
+    }
+
+    $q.all([scope.accounts,
+            scope.subscriptions,
+            scope.domains,
+            scope.applications,
+            scope.supportRequests,
+            scope.invitationBox,
+            scope.receivedInvitations,
+            scope.sentInvitations,
+            scope.removedInvitations])
+        .then(function(_) {
+            var accts = _.shift();
+            var subs = _.shift();
+            var doms = _.shift();
+            var apps = _.shift();
+            var reqs = _.shift();
+            var invBox = _.shift();
+            var recvdInvs = _.shift();
+            var sentInvs = _.shift();
+            var remvdInvs = _.shift();
+            var i;
+
+            scope.refreshing = false;
+
+            var accountsByGuid = {}, subsByGuid = {};
+            for (i = 0; i < accts.length; i++) {
+                accountsByGuid[accts[i].guid] = accts[i];
+                accts[i].domains = [];
+                accts[i].subscriptions = [];
+            }
+            accountsByGuidDeferred.resolve(accountsByGuid);
+
+            for (i = 0; i < subs.length; i++) {
+                subsByGuid[subs[i].guid] = subs[i];
+                subs[i].applications = [];
+                if (subs[i].account) {
+                    subs[i].account.subscriptions.push(subs[i]);
+                } else {
+                    console.error("Subscription " + subs.guid + " has no account");
+                }
+            }
+            subscriptionsByGuidDeferred.resolve(subsByGuid);
+
+            var domainsByGuid = {}, appsByGuid = {}, supportRequestsByGuid = {};
+            var invitationsByGuid = {};
+            for (i = 0; i < doms.length; i++) {
+                domainsByGuid[doms[i].guid] = doms[i];
+                doms[i].applications = [];
+                if (doms[i].account) {
+                    doms[i].account.domains.push(doms[i]);
+                } else {
+                    console.error("Domain '" + doms[i].domain + "' has no account");
+                }
+            }
+            domainsByGuidDeferred.resolve(domainsByGuid);
+
+            for (i = 0; i < apps.length; i++) {
+                appsByGuid[apps[i].guid] = apps[i];
+                if (apps[i].domain) {
+                    apps[i].domain.applications.push(apps[i]);  // TODO: this sometimes generates errors, investigate
+                }
+                if (apps[i].subscription) {
+                    apps[i].subscription.applications.push(apps[i]);
+                }
+            }
+            appsByGuidDeferred.resolve(appsByGuid);
+
+            for (i = 0; i < reqs.length; i++) {
+                supportRequestsByGuid[reqs[i].guid] = reqs[i];
+            }
+            supportRequestsByGuidDeferred.resolve(supportRequestsByGuid);
+
+            if (recvdInvs) {
+                for (i = 0; i < recvdInvs.length; i++) {
+                    invitationsByGuid[recvdInvs[i].guid] = recvdInvs[i];
+                }
+            }
+            if (sentInvs) {
+                for (i = 0; i < sentInvs.length; i++) {
+                    invitationsByGuid[sentInvs[i].guid] = sentInvs[i];
+                }
+            }
+            if (remvdInvs) {
+                for (i = 0; i < remvdInvs.length; i++) {
+                    invitationsByGuid[remvdInvs[i].guid] = remvdInvs[i];
+                }
+            }
+            scope.invitationsByGuidDeferred.resolve(invitationsByGuid);
+        }, function(error) {
+            scope.refreshing = false;
+            console.error("Error refreshing content! " + error.message + "(" + error.code + ")");
+        });
+}
+
+function getUserProfilesForObj(obj, $rootScope, $q, FatFractal) {
+    var profilesDeferred = $q.defer();
+
+    var readProfiles = FatFractal.getArrayFromUri(obj.ffUrl + "/readUser/()/profiles", true);
+    var writeProfiles = FatFractal.getArrayFromUri(obj.ffUrl + "/writeUser/()/profiles", true);
+    var inviteProfiles = FatFractal.getArrayFromUri(obj.ffUrl + "/inviteUser/()/profiles", true);
+
+    $q.all([readProfiles, writeProfiles, inviteProfiles])
+        .then(function(profs) {
+            var filteredProfs = [];
+            for (var i = 0; i < profs.length; i++) {
+                filteredProfs[i] = profs[i].filter(function(e) {
+                    return !(e.ffUser && e.ffUser.guid == $rootScope.loggedInUser.guid);
+                });
+            }
+
+            var groups = {};
+            groups.read = filteredProfs[0];
+            groups.write = filteredProfs[1];
+            groups.invite = filteredProfs[2];
+
+            profilesDeferred.resolve(groups);
+        });
+
+    return profilesDeferred.promise;
+}

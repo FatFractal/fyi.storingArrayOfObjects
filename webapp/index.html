@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en" ng-app="ffConsole">
+<head>
+  <meta charset="utf-8">
+  <script type="text/javascript">
+    function httpsRedirect() {
+      var httpURL = window.location.hostname + window.location.pathname;
+      var httpsURL = "https://" + httpURL;
+      window.location = httpsURL;
+    }
+    console.log(window.location.href);
+    console.log(!window.location.href.match('^https://') && !window.location.href.match('^http://localhost'));
+    if (!window.location.href.match('^https://') && !window.location.href.match('^http://localhost'))
+      httpsRedirect();
+  </script>
+  <link rel="stylesheet" href="css/app.css"/>
+  <link href="lib/ui-bootstrap/assets/bootstrap.css" rel="stylesheet" media="screen">
+  <style>#drop-zone{border:2px dashed #bbb;-moz-border-radius:5px;-webkit-border-radius:5px;border-radius:5px;padding:25px;text-align:center;font: 20pt bold 'Vollkorn';color:#bbb;width:156px;}
+  </style>
+</head>
+<!--
+<body onunload="cleanUp()">
+-->
+<body>
+<div id="navbar" class="navbar" ng-controller="LoginCtrl">
+  <div class="navbar-inner">
+    <img src="img/beta.png" width="240px" class="brand pull-left">
+    <h1 style="margin: 20px -20px">Test Harness</h1>
+    <div class="span4" ui-if="refreshing" ng-cloak spinner style="margin: 20px -20px"></div>
+  </div>
+</div>
+<div class="well" id="top-level">
+  <h1>FYI - Storing a bunch of objects at one time with FatFractal!</h1>
+  <p>This application demonstrates how to store a number of objects in a single call to your backend using FatFractal.</p>
+  <h4>You can see the data created by this app using the FatFractal DataBrowser (
+    <a href = https://system.fatfractal.com/console/databrowser/databrowser.html?baseUrl=https://fyi.fatfractal.com/storingArrayOfObjects target = _blank>
+      here
+    </a>
+    )
+  </h4>
+  <h4>You can access the source code for the sample application (
+    <a href = https://github.com/FatFractal/fyi.storingArrayOfObjects target = _blank>
+      here
+    </a>
+    )
+  </h4>
+  <div class="well" id="model-section">
+    <h2>The following Model is used with this post</h2>
+    <p>function Note() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;this.subject = null;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;this.note = null;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;return this;<br>
+      }
+    </p>
+	<h4>Generate a bunch of notes in the client</h4>
+    <button id="gen-some-notes-button" class="btn" onclick="GenerateSomeNotes()">Generate Some Notes!</button>
+    <p id = "generate-some-notes-data"></p>
+  </div>
+  <div class="well" id="server-extension-section">
+    <h2>Server Extension</h2>
+    <p>This Server Extension will receive an array of Note objects and then store them to the backend.  The object and their metadata are then returned to the client.
+    </p>
+	<h4>
+	  The Server Extension code is (
+      <a href = https://github.com/FatFractal/fyi.storingArrayOfObjects/blob/master/ff-scripts/NotesExtensions.js target = _blank>
+        here
+      </a>
+    )
+    </h4>
+    <div class="well" id="note-input-section">
+      <button id="save-notes-button" class="btn" onclick="SaveABunchOfNotes()">Save them all in one go!</button>
+      <p id = "extension-response"></p>
+    </div>
+  </div>
+  <div class="well" id="get-all-notes">
+    <h2>Get all the Note objects from the Notes collection</h2>
+    <div class="well">
+       <p>ff.getArrayFromUri("/ff/resources/Notes/", function(r) {<br>
+           &nbsp;&nbsp;&nbsp;&nbsp;// handle success<br>
+           }, function(code,message){<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;// handle error<br>
+            });
+       </p>
+    </div>
+    <button id="get-all-notes-button" class="btn" onclick="GetAllNotes()">Get all Notes!</button>
+    <br>
+    <p id = "get-all-notes-response"></p>
+  </div>
+</div>
+<!--Scripts-->
+<script src="lib/FatFractal.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/beautify.js"></script>
+<!--
+<script src="lib/moment.min.js"></script>
+<script src="lib/spin.min.js"></script>
+<script src="resources/en.js"></script>
+-->
+</body>
+<script type="text/javascript">
+  if (window.File && window.FileReader && window.FileList && window.Blob) {
+    // Great success! All the File APIs are supported.
+  } else {
+    alert('The File APIs are not fully supported in this browser.');
+  }
+</script>
+<script type="text/javascript">
+  function Note(obj) {
+    this.subject = null;
+    this.note = null;
+    if(obj) {
+      this.subject = obj.subject;
+      this.note = obj.note;
+    }
+    return this;
+  }
+  var m_notes = [];
+  function GenerateSomeNotes() {
+    // This will create an array of 10 notes
+    for (var i = 0; i < 10; i++) {
+	  var note = new Note();
+	  note.subject =  "Note " + i
+      note.note = "This is note " + i;
+      m_notes.push(note);
+      var str = js_beautify(JSON.stringify(m_notes), {
+         indent_size: 4,
+         indent_char: '&nbsp;',
+         linefeed_char: '<br>'
+      });
+      var el = document.getElementById('generate-some-notes-data');
+      el.innerHTML = "<br><div class = 'well blue'>" + str + "</div>";
+    }
+  }
+  function SaveABunchOfNotes() {
+    ff.login("test_user", "T3st_Us3r", function() {
+      var el = document.getElementById('extension-response');
+      ff.postArrayToExtension(m_notes, "/ff/ext/storeArrayOfNotes", function(resp) {
+	      var str = js_beautify(JSON.stringify(resp), {
+	         indent_size: 4,
+	         indent_char: '&nbsp;',
+	         linefeed_char: '<br>'
+	      });
+	      el.innerHTML = "<br><div class = 'well blue'>" + str + "</div>";
+		  
+      }, function(code, msg) {
+        console.error("SaveABunchOfNotes() postObjToExtension Error: " + code + " " + msg);
+        el.innerHTML = "<div class = 'well red'>Got an error: " + msg + "</div>";
+      });
+    }, function(code, msg) {
+      console.error("Error logging in: " + code + ", error message" + msg);
+    });
+  }
+  function GetAllNotes() {
+     var el = document.getElementById('get-all-notes-response');
+     ff.getArrayFromUri("/ff/resources/Notes/", function(notes) {
+        if(notes.length <= 0) alert("Create some Note objects in the Notes Collection first!");
+        else {
+            var str = js_beautify(JSON.stringify(notes), {
+               indent_size: 4,
+               indent_char: '&nbsp;',
+               linefeed_char: '<br>'
+            });
+           el.innerHTML = "<br><div class = 'well blue'>" + str + "</div>";
+        }
+     }, function(code, msg) {
+        el.innerHTML = "<div class = 'well red'>Got an error: " + msg + "</div>";
+        console.error("getActorsFromFavs() getArrayFromUri Error: " + code + " " + msg);
+     });
+  }
+</script>
+<script type="text/javascript">
+   var ff = new FatFractal();
+   window.onbeforeunload=cleanup;
+   function cleanup(e) {
+      var leave_message = 'Thanks for visiting! \nAll test data has been deleted.';
+      ff.getObjFromExtension("/ff/ext/cleanup", function(resp) {
+      }, function(code, msg) {
+         console.error("cleanup error: " + msg);
+      });
+      return leave_message;
+   }
+</script>
+</html>

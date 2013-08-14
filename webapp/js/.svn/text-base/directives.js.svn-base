@@ -1,0 +1,128 @@
+'use strict';
+
+/* Directives */
+
+
+angular.module('ffConsole.directives', [])
+    .directive('appVersion', ['version', function(version) {
+        return function(scope, elm, attrs) {
+            elm.text(version);
+        };
+    }])
+    .directive('focus', function() {
+        return function (scope, element, attrs) {
+            attrs.$observe('focus', function (newValue) {
+                newValue === 'true' && element[0].focus();
+            });
+        }
+    })
+    // from http://piotrbuda.eu/2013/02/angularjs-directive-for-password-matching.html
+    .directive("repeatPassword", function() {
+        return {
+            require: "ngModel",
+            link: function(scope, elem, attrs, ctrl) {
+                var otherInput = elem.inheritedData("$formController")[attrs.repeatPassword];
+
+                ctrl.$parsers.push(function(value) {
+                    if (value === otherInput.$viewValue) {
+                        ctrl.$setValidity("repeat", true);
+                        return value;
+                    }
+                    ctrl.$setValidity("repeat", false);
+                });
+
+                otherInput.$parsers.push(function(value) {
+                    ctrl.$setValidity("repeat", value === ctrl.$viewValue);
+                    return value;
+                });
+            }
+        };
+    })
+    .directive('compileHtml', function($compile) {
+        // from http://docs.angularjs.org/api/ng.$compile
+        // directive factory creates a link function
+        return function(scope, element, attrs) {
+            scope.$watch(
+                function(scope) {
+                    // watch the 'compile' expression for changes
+                    return scope.$eval(attrs.compileHtml);
+                },
+                function(value) {
+                    // when the 'compile' expression changes
+                    // assign it into the current DOM
+                    element.html(value);
+
+                    // compile the new DOM and link it to the current
+                    // scope.
+                    // NOTE: we only compile .childNodes so that
+                    // we don't get into infinite loop compiling ourselves
+                    $compile(element.contents())(scope);
+                }
+            );
+        }
+    })
+    .directive('teamMembers', function() {
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: true,
+            scope: {
+                object: '=',
+                hideTitle: '@'
+            },
+            templateUrl: 'partials/directives/team-members.html',
+            controller: TeamMembersCtrl
+        }
+    })
+    .directive('comments', function() {
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: true,
+            scope: {
+                object: '=',
+                hideTitle: '@'
+            },
+            templateUrl: 'partials/directives/comments.html',
+            controller: CommentsCtrl
+        }
+    })
+    .directive('allowances', function() {
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: true,
+            scope: {
+                product: '=',
+                subscription: '=',
+                hideTitle: '@'
+            },
+            templateUrl: 'partials/directives/allowances.html',
+            controller: AllowancesCtrl
+        }
+    })
+    .directive('usage', function() {
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: true,
+            scope: {
+                object: '=',
+                hideTitle: '@'
+            },
+            templateUrl: 'partials/directives/usage.html',
+            controller: UsageCtrl
+        }
+    })
+    .directive('spinner', function() {
+        return function(scope, iElement, iAttrs) {
+            var opts = {
+                lines: 11,
+                length: 5,
+                width: 2,
+                radius: 5
+            };
+            var spinner = new Spinner(opts).spin();
+            iElement.append(spinner.el);
+        }
+    });

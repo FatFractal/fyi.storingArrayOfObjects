@@ -1,0 +1,58 @@
+'use strict';
+
+
+// Declare app level module which depends on filters, and services
+angular.module('ffConsole', ['ffConsole.filters', 'ffConsole.services', 'ffConsole.directives', 'ngResource', 'ui', 'ui.bootstrap', 'LocalStorageModule'])
+    .config(['$routeProvider', function($routeProvider) {
+        $routeProvider.when('/getting-started', {templateUrl: 'partials/getting-started.html', controller: GettingStartedCtrl});
+
+        $routeProvider.when('/accounts', {templateUrl: 'partials/accounts/accounts.html', controller: AccountCtrl});
+        $routeProvider.when('/accounts/new', {templateUrl: 'partials/accounts/new.html', controller: AccountCtrl});
+        $routeProvider.when('/accounts/:detailGuid', {templateUrl: 'partials/accounts/detail.html', controller: AccountCtrl});
+//        $routeProvider.when('/accounts/:detailGuid', {redirectTo: '/accounts/:detailGuid/info'});
+        $routeProvider.when('/accounts/:detailGuid/edit', {templateUrl: 'partials/accounts/edit.html', controller: AccountCtrl});
+//        $routeProvider.when('/accounts/:detailGuid/:tab', {templateUrl: 'partials/accounts/detail.html', controller: AccountCtrl});
+        $routeProvider.when('/accounts/:detailGuid/paymentMethods/new', {templateUrl: 'partials/accounts/payment-new.html', controller: AccountCtrl});
+        $routeProvider.when('/accounts/:detailGuid/paymentMethods/:index', {templateUrl: 'partials/accounts/payment-detail.html', controller: AccountCtrl});
+        $routeProvider.when('/accounts/:detailGuid/paymentMethods/:index/edit', {templateUrl: 'partials/accounts/payment-edit.html', controller: AccountCtrl});
+
+        $routeProvider.when('/subscriptions', {templateUrl: 'partials/subscriptions/subscriptions.html', controller: SubscriptionCtrl});
+        $routeProvider.when('/subscriptions/new', {templateUrl: 'partials/subscriptions/new.html', controller: SubscriptionCtrl});
+        $routeProvider.when('/subscriptions/:detailGuid', {templateUrl: 'partials/subscriptions/detail.html', controller: SubscriptionCtrl});
+//        $routeProvider.when('/subscriptions/:detailGuid', {redirectTo: '/subscriptions/:detailGuid/info'});
+        $routeProvider.when('/subscriptions/:detailGuid/edit', {templateUrl: 'partials/subscriptions/edit.html', controller: SubscriptionCtrl});
+//        $routeProvider.when('/subscriptions/:detailGuid/:tab', {templateUrl: 'partials/subscriptions/detail.html', controller: SubscriptionCtrl});
+
+        $routeProvider.when('/domains', {templateUrl: 'partials/domains/domains.html', controller: DomainCtrl});
+        $routeProvider.when('/domains/new', {templateUrl: 'partials/domains/new.html', controller: DomainCtrl});
+        $routeProvider.when('/domains/:detailGuid', {templateUrl: 'partials/domains/detail.html', controller: DomainCtrl});
+//        $routeProvider.when('/domains/:detailGuid', {redirectTo: '/domains/:detailGuid/info'});
+        $routeProvider.when('/domains/:detailGuid/edit', {templateUrl: 'partials/domains/edit.html', controller: DomainCtrl});
+//        $routeProvider.when('/domains/:detailGuid/:tab', {templateUrl: 'partials/domains/detail.html', controller: DomainCtrl});
+
+        $routeProvider.when('/applications', {templateUrl: 'partials/apps/apps.html', controller: AppCtrl});
+        $routeProvider.when('/applications/new', {templateUrl: 'partials/apps/new.html', controller: AppCtrl});
+        $routeProvider.when('/applications/:detailGuid', {templateUrl: 'partials/apps/detail.html', controller: AppCtrl});
+//        $routeProvider.when('/applications/:detailGuid', {redirectTo: '/applications/:detailGuid/info'});
+        $routeProvider.when('/applications/:detailGuid/edit', {templateUrl: 'partials/apps/edit.html', controller: AppCtrl});
+//        $routeProvider.when('/applications/:detailGuid/:tab', {templateUrl: 'partials/apps/detail.html', controller: AppCtrl});
+
+        $routeProvider.when('/supportRequests', {templateUrl: 'partials/supportRequests/supportRequests.html', controller: SupportCtrl});
+        $routeProvider.when('/supportRequests/sent', {templateUrl: 'partials/supportRequests/sent.html', controller: SupportCtrl});
+        $routeProvider.when('/supportRequests/new', {templateUrl: 'partials/supportRequests/new.html', controller: SupportCtrl});
+        $routeProvider.when('/supportRequests/:detailGuid', {templateUrl: 'partials/supportRequests/detail.html', controller: SupportCtrl});
+        $routeProvider.when('/supportRequests/:detailGuid/edit', {templateUrl: 'partials/supportRequests/edit.html', controller: SupportCtrl});
+
+        $routeProvider.when('/messages', {templateUrl: 'partials/messages/messages.html', controller: MsgCtrl});
+        $routeProvider.when('/messages/sent', {templateUrl: 'partials/messages/sent.html', controller: MsgCtrl});
+        $routeProvider.when('/messages/new', {templateUrl: 'partials/messages/new.html', controller: MsgCtrl});
+
+        $routeProvider.when('/invitations', {templateUrl: 'partials/invitations/invitations.html', controller: InviteCtrl});
+        $routeProvider.when('/invitations/sent', {templateUrl: 'partials/invitations/sent.html', controller: InviteCtrl});
+        $routeProvider.when('/invitations/sent/:detailGuid', {templateUrl: 'partials/invitations/sent-detail.html', controller: InviteCtrl});
+        $routeProvider.when('/invitations/new', {templateUrl: 'partials/invitations/new.html', controller: InviteCtrl});
+        $routeProvider.when('/invitations/:detailGuid', {templateUrl: 'partials/invitations/detail.html', controller: InviteCtrl});
+
+        $routeProvider.when('/', {templateUrl: 'partials/empty.html', controller: RootCtrl});
+        $routeProvider.otherwise({redirectTo: '/'});
+    }]);
