@@ -45,7 +45,8 @@
     )
   </h4>
   <div class="well" id="model-section">
-    <h2>The following Model is used with this test application</h2>
+    <h2>Note Model</h2>
+    <p>The following Model is used with this test application.</p>
     <div class="well">
       <p>function Note() {<br>
          &nbsp;&nbsp;&nbsp;&nbsp;this.subject = null;<br>
@@ -70,18 +71,13 @@
       </a>
     )
     </h4>
+    <p>Below is the client code that saves an array of Note objects to the backend.</p>
     <div class="well">
-       <p>function SaveABunchOfNotes() {<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;ff.login("test_user", "T3st_Us3r", function() {<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ff.postArrayToExtension(m_notes, "/ff/ext/storeArrayOfNotes", function(resp) {<br>
-	      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// handle success<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}, function(code, msg) {<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// handle save error<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;}, function(code, msg) {<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// handle login error<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;});<br>
-          }
+       <p>ff.postArrayToExtension(m_notes, "/ff/ext/storeArrayOfNotes", function(resp) {<br>
+	      &nbsp;&nbsp;&nbsp;&nbsp;// handle success<br>
+	      }, function(code, msg) {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;// handle error<br>
+	      });<br>
        </p>
     </div>
     <button id="save-notes-button" class="btn" onclick="SaveABunchOfNotes()">Save them all in one go!</button>
@@ -89,8 +85,9 @@
   </div>
   <div class="well" id="get-all-notes">
     <h2>Get all the Note objects from the Notes collection</h2>
+    <p>Below is the client code that gets all the Note objects that the user has access to from the backend.</p>
     <div class="well">
-       <p>ff.getArrayFromUri("/ff/resources/Notes/", function(r) {<br>
+       <p>ff.getArrayFromUri("/ff/resources/Notes/", function(resp) {<br>
            &nbsp;&nbsp;&nbsp;&nbsp;// handle success<br>
            }, function(code,message){<br>
             &nbsp;&nbsp;&nbsp;&nbsp;// handle error<br>
