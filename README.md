@@ -1,4 +1,4 @@
-fyi.manipulatingimages
+fyi.storingArrayOfObjects
 =========================
 
 This sample applicaiton demonstrates how to store and array of objects with a single API call.
