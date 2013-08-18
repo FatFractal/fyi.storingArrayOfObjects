@@ -100,14 +100,53 @@
   </div>
   <div class="well" id="save-maze-section">
     <h2>The Maze Test</h2>
-    <p>Below is the client code that will save a maze that contains an array of locations.</p>
+    <p>Below is the client code that will save a maze that contains an array of locations by value.</p>
     <div class="well">
-       <p>ff.getArrayFromUri("/ff/resources/Notes/", function(resp) {<br>
-           &nbsp;&nbsp;&nbsp;&nbsp;// handle success<br>
-           }, function(code,message){<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;// handle error<br>
-            });
-       </p>
+		  var maze = new Maze();<br>
+          maze.mazeName = "Test Maze";<br>
+          for (var i = 0; i < locations.length; i++) {<br>
+	      &nbsp;&nbsp;&nbsp;&nbsp;var location = new Location(locations[i]);<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;maze.locations.push(location);<br>
+	      }<br>
+          ff.createObjAtUri(maze, "/Mazes", function(resp) {<br>
+	      &nbsp;&nbsp;&nbsp;&nbsp;// Handle success<br>
+	      }, function(code, msg) {<br>
+		  &nbsp;&nbsp;&nbsp;&nbsp;// Handle success<br>
+	      });
+    </div>
+    <p>Below is the client code that will save a maze that send the array to a server extension for processing.</p>
+    <div class="well">
+      var maze = new Maze();<br>
+        maze.mazeName = "Test Maze";<br>
+          for (var i = 0; i < locations.length; i++) {<br>
+	      &nbsp;&nbsp;&nbsp;&nbsp;var location = new Location(locations[i]);<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;maze.locations.push(location);<br>
+	      }<br>
+          ff.postObjToExtension(maze, "/ff/ext/storeRefMaze", function(m) {<br>
+	      &nbsp;&nbsp;&nbsp;&nbsp;// Handle success<br>
+	      }, function(code, msg) {<br>
+		  &nbsp;&nbsp;&nbsp;&nbsp;// Handle success<br>
+	      });<br>
+   </div>
+       <p>And the server extension looks like this.</p>
+   <div class="well">
+       var maze = ff.getExtensionRequestData().httpContent;<br>
+       var m = new RefMaze();<br>
+       m.mazeName = maze.mazeName;<br>
+       m = ff.createObjAtUri(m, "/RefMazes", ff.getExtensionRequestData().ffUser);<br>
+       var locations = [];<br>
+       for (var i = 0; i < maze.locations.length; i++) {<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;var loc = new Location(maze.locations[i]);<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;var l = ff.createObjAtUri(loc, "/Locations", ff.getExtensionRequestData().ffUser);<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;print("storeRefMaze l.ffUrl is " + l.ffUrl);<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;ff.grabBagAdd(l.ffUrl, m.ffUrl, "locations");<br>
+       }<br>
+       m = ff.getObjFromUri(m.ffUrl);<br>
+       var r = ff.response();<br>
+       r.mimeType = "application/json";<br>
+       r.result = m;<br>
+       r.responseCode="200";<br>
+       r.statusMessage = "storeRefMaze has created " + m + " to your backend.";<br>
     </div>
     <button id="save-maze-button" class="btn" onclick="SaveMaze()">Save a Maze by Value!</button>
     <button id="save-maze-button" class="btn" onclick="SaveRefMazeViaExtension()">Save a RefMaze via Server Extension!</button>
@@ -218,10 +257,21 @@
     }
     return this;
    }
+  var locations = [
+     {gridX:1,gridY:1,gridLabel:"This is location 1"},
+     {gridX:2,gridY:1,gridLabel:"This is location 2"},
+     {gridX:3,gridY:1,gridLabel:"This is location 3"},
+     {gridX:1,gridY:2,gridLabel:"This is location 4"},
+     {gridX:2,gridY:2,gridLabel:"This is location 5"},
+     {gridX:3,gridY:2,gridLabel:"This is location 6"},
+     {gridX:1,gridY:3,gridLabel:"This is location 7"},
+     {gridX:2,gridY:3,gridLabel:"This is location 8"},
+     {gridX:3,gridY:3,gridLabel:"This is location 9"}
+  ]
    function RefMaze(obj) {
       this.clazz = "RefMaze";
       this.mazeName = null;
-      this.locations = null;
+      this.locations = [];
       if(obj) {
          this.subject = obj.mazeName;
          this.locations = obj.locations;
@@ -231,17 +281,6 @@
    function SaveMaze() {
       var el = document.getElementById('maze-response');
       el.innerHTML = "";
-	  var locations = [
-	     {gridX:1,gridY:1,gridLabel:"This is location 1"},
-	     {gridX:2,gridY:1,gridLabel:"This is location 2"},
-	     {gridX:3,gridY:1,gridLabel:"This is location 3"},
-	     {gridX:1,gridY:2,gridLabel:"This is location 4"},
-	     {gridX:2,gridY:2,gridLabel:"This is location 5"},
-	     {gridX:3,gridY:2,gridLabel:"This is location 6"},
-	     {gridX:1,gridY:3,gridLabel:"This is location 7"},
-	     {gridX:2,gridY:3,gridLabel:"This is location 8"},
-	     {gridX:3,gridY:3,gridLabel:"This is location 9"}
-	  ]
 	  var maze = new Maze();
 	  maze.mazeName = "Test Maze";
       for (var i = 0; i < locations.length; i++) {
@@ -271,20 +310,12 @@
   function SaveRefMazeViaExtension() {
       var el = document.getElementById('maze-response');
       el.innerHTML = "";
-	  var locations = [
-	  {gridX:1,gridY:1,gridLabel:"This is location 1"},
-	  {gridX:2,gridY:1,gridLabel:"This is location 2"},
-	  {gridX:3,gridY:1,gridLabel:"This is location 3"},
-	  {gridX:1,gridY:2,gridLabel:"This is location 4"},
-	  {gridX:2,gridY:2,gridLabel:"This is location 5"},
-	  {gridX:3,gridY:2,gridLabel:"This is location 6"},
-	  {gridX:1,gridY:3,gridLabel:"This is location 7"},
-	  {gridX:2,gridY:3,gridLabel:"This is location 8"},
-	  {gridX:3,gridY:3,gridLabel:"This is location 9"}
-	  ]
 	  var maze = new RefMaze();
 	  maze.mazeName = "Test RefMaze";
-	  maze.locations = locations;
+      for (var i = 0; i < locations.length; i++) {
+		  var location = new Location(locations[i]);
+		  maze.locations.push(location);
+	  }
       ff.login("test_user", "T3st_Us3r", function() {
          ff.postObjToExtension(maze, "/ff/ext/storeRefMaze", function(m) {
 	         var str = js_beautify(JSON.stringify(m), {
