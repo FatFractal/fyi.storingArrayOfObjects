@@ -2,15 +2,35 @@
 var ff = require('ffef/FatFractal');
 
 exports.cleanup = function() {
+    var count = 0;
     var notes = ff.getArrayFromUri("/Notes");
     if (notes == null) return;
     for (var i = 0; i < notes.length; i++) {
         ff.deleteObj(notes[i]);
+        count ++;
+    }
+    var mazes = ff.getArrayFromUri("/Mazes");
+    if (mazes == null) return;
+    for (var i = 0; i < mazes.length; i++) {
+        ff.deleteObj(mazes[i]);
+        count ++;
+    }
+    var refMazes = ff.getArrayFromUri("/RefMazes");
+    if (refMazes == null) return;
+    for (var i = 0; i < refMazes.length; i++) {
+        ff.deleteObj(refMazes[i]);
+        count ++;
+    }
+    var locations = ff.getArrayFromUri("/Locations");
+    if (locations == null) return;
+    for (var i = 0; i < locations.length; i++) {
+        ff.deleteObj(locations[i]);
+        count ++;
     }
     var r = ff.response();
-    r.result = "<h1> Thanks for visiting</h1><p>We have deleted  " + notes.length + " objects from the tests.</p>";
+    r.result = "<h1> Thanks for visiting</h1><p>We have deleted  " + count + " objects from the tests.</p>";
     r.responseCode="200";
-    r.statusMessage = "cleanup has deleted " + notes.length + " objects from your backend.";
+    r.statusMessage = "cleanup has deleted " + count + " objects from your backend.";
     r.mimeType = "text/html";
 }
 exports.storeArrayOfNotes = function() {
@@ -33,6 +53,57 @@ exports.storeArrayOfNotes = function() {
     r.result = createdNotes;
     r.responseCode="200";
     r.statusMessage = "storeArrayOfNotes has created " + createdNotes.length + " objects to your backend.";
+}
+
+exports.storeRefMaze = function() {
+    var maze = ff.getExtensionRequestData().httpContent;
+    print("storeRefMaze received: " + JSON.stringify(maze));
+    var r = ff.response();
+    r.mimeType = "application/json";
+    if (maze == null) {
+        r.result = null;
+        r.responseCode = "400";
+        r.statusMessage = "No Maze object supplied";
+        return;
+    }
+    function RefMaze(obj) {
+        this.clazz = "RefMaze";
+        this.mazeName = null;
+        this.locations = null;
+        if(obj) {
+            this.subject = obj.mazeName;
+            this.locations = obj.locations;
+        }
+        return this;
+    }
+    function Location(obj) {
+        this.clazz = "Location";
+        this.gridX = null;
+        this.gridY = null;
+        this.gridLabel = null;
+        if(obj) {
+            this.gridX = obj.gridX;
+            this.gridY = obj.gridY;
+            this.gridLabel = obj.gridLabel;
+        }
+        return this;
+    }
+    var m = new RefMaze();
+    m.mazeName = maze.mazeName;
+    m = ff.createObjAtUri(m, "/RefMazes", ff.getExtensionRequestData().ffUser);
+    print("storeRefMaze m.ffUrl is " + m.ffUrl);
+    var locations = [];
+    print("storeRefMaze will store " + maze.locations.length + " locations");
+    for (var i = 0; i < maze.locations.length; i++) {
+    	var loc = new Location(maze.locations[i]);
+        var l = ff.createObjAtUri(loc, "/Locations", ff.getExtensionRequestData().ffUser);
+        print("storeRefMaze l.ffUrl is " + l.ffUrl);
+        ff.grabBagAdd(l.ffUrl, m.ffUrl, "locations");
+    }
+    m = ff.getObjFromUri(m.ffUrl);
+    r.result = m;
+    r.responseCode="200";
+    r.statusMessage = "storeRefMaze has created " + m + " to your backend.";
 }
 
 

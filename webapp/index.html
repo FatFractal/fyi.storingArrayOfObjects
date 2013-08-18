@@ -73,7 +73,7 @@
     </h4>
     <p>Below is the client code that saves an array of Note objects to the backend.</p>
     <div class="well">
-       <p>ff.postArrayToExtension(m_notes, "/ff/ext/storeArrayOfNotes", function(resp) {<br>
+       <p>ff.postObjToExtension(m_notes, "/ff/ext/storeArrayOfNotes", function(resp) {<br>
 	      &nbsp;&nbsp;&nbsp;&nbsp;// handle success<br>
 	      }, function(code, msg) {<br>
           &nbsp;&nbsp;&nbsp;&nbsp;// handle error<br>
@@ -97,6 +97,22 @@
     <button id="get-all-notes-button" class="btn" onclick="GetAllNotes()">Get all Notes!</button>
     <br>
     <p id = "get-all-notes-response"></p>
+  </div>
+  <div class="well" id="save-maze-section">
+    <h2>The Maze Test</h2>
+    <p>Below is the client code that will save a maze that contains an array of locations.</p>
+    <div class="well">
+       <p>ff.getArrayFromUri("/ff/resources/Notes/", function(resp) {<br>
+           &nbsp;&nbsp;&nbsp;&nbsp;// handle success<br>
+           }, function(code,message){<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;// handle error<br>
+            });
+       </p>
+    </div>
+    <button id="save-maze-button" class="btn" onclick="SaveMaze()">Save a Maze by Value!</button>
+    <button id="save-maze-button" class="btn" onclick="SaveRefMazeViaExtension()">Save a RefMaze via Server Extension!</button>
+    <br>
+    <p id = "maze-response"></p>
   </div>
 </div>
 <!--Scripts-->
@@ -147,7 +163,7 @@
 	if(m_notes.length <=0) alert("Please create some data above first...")
     ff.login("test_user", "T3st_Us3r", function() {
       var el = document.getElementById('extension-response');
-      ff.postArrayToExtension(m_notes, "/ff/ext/storeArrayOfNotes", function(resp) {
+      ff.postObjToExtension(m_notes, "/ff/ext/storeArrayOfNotes", function(resp) {
 	      var str = js_beautify(JSON.stringify(resp), {
 	         indent_size: 4,
 	         indent_char: '&nbsp;',
@@ -179,6 +195,114 @@
         el.innerHTML = "<div class = 'well red'>Got an error: " + msg + "</div>";
         console.error("getActorsFromFavs() getArrayFromUri Error: " + code + " " + msg);
      });
+  }
+  function Location(obj) {
+	this.clazz = "Location";
+    this.gridX = null;
+    this.gridY = null;
+    this.gridLabel = null;
+    if(obj) {
+      this.gridX = obj.gridX;
+      this.gridY = obj.gridY;
+      this.gridLabel = obj.gridLabel;
+    }
+    return this;
+  }
+  function Maze(obj) {
+  	this.clazz = "Maze";
+    this.mazeName = null;
+    this.locations = [];
+    if(obj) {
+      this.subject = obj.mazeName;
+      this.locations = obj.locations;
+    }
+    return this;
+   }
+   function RefMaze(obj) {
+      this.clazz = "RefMaze";
+      this.mazeName = null;
+      this.locations = null;
+      if(obj) {
+         this.subject = obj.mazeName;
+         this.locations = obj.locations;
+      }
+      return this;
+   }
+   function SaveMaze() {
+      var el = document.getElementById('maze-response');
+      el.innerHTML = "";
+	  var locations = [
+	     {gridX:1,gridY:1,gridLabel:"This is location 1"},
+	     {gridX:2,gridY:1,gridLabel:"This is location 2"},
+	     {gridX:3,gridY:1,gridLabel:"This is location 3"},
+	     {gridX:1,gridY:2,gridLabel:"This is location 4"},
+	     {gridX:2,gridY:2,gridLabel:"This is location 5"},
+	     {gridX:3,gridY:2,gridLabel:"This is location 6"},
+	     {gridX:1,gridY:3,gridLabel:"This is location 7"},
+	     {gridX:2,gridY:3,gridLabel:"This is location 8"},
+	     {gridX:3,gridY:3,gridLabel:"This is location 9"}
+	  ]
+	  var maze = new Maze();
+	  maze.mazeName = "Test Maze";
+      for (var i = 0; i < locations.length; i++) {
+		  var location = new Location(locations[i]);
+		  maze.locations.push(location);
+	  }
+      ff.login("test_user", "T3st_Us3r", function() {
+         ff.createObjAtUri(maze, "/Mazes", function(resp) {
+            var m = new Maze(resp);
+            var str = js_beautify(JSON.stringify(m), {
+               indent_size: 4,
+               indent_char: '&nbsp;',
+               linefeed_char: '<br>'
+            });
+            el.innerHTML = "<br><div class = 'well blue'>Maze was created in the  " +
+               resp.ffRL + " Collection with data: " +
+               str + "</div>";
+            console.log("Maze was created: " + JSON.stringify(resp));
+         }, function(code, msg) {
+            el.innerHTML = "<br><div class = 'well red'>Got an error: " + msg + "</div>";
+            console.error("StoreMaze() createObjAtUri Error: " + code + " " + msg);
+         });
+      }, function(code, msg) {
+         console.error("Error logging in: " + code + ", error message" + msg);
+      });
+  }
+  function SaveRefMazeViaExtension() {
+      var el = document.getElementById('maze-response');
+      el.innerHTML = "";
+	  var locations = [
+	  {gridX:1,gridY:1,gridLabel:"This is location 1"},
+	  {gridX:2,gridY:1,gridLabel:"This is location 2"},
+	  {gridX:3,gridY:1,gridLabel:"This is location 3"},
+	  {gridX:1,gridY:2,gridLabel:"This is location 4"},
+	  {gridX:2,gridY:2,gridLabel:"This is location 5"},
+	  {gridX:3,gridY:2,gridLabel:"This is location 6"},
+	  {gridX:1,gridY:3,gridLabel:"This is location 7"},
+	  {gridX:2,gridY:3,gridLabel:"This is location 8"},
+	  {gridX:3,gridY:3,gridLabel:"This is location 9"}
+	  ]
+	  var maze = new RefMaze();
+	  maze.mazeName = "Test RefMaze";
+	  maze.locations = locations;
+      ff.login("test_user", "T3st_Us3r", function() {
+         ff.postObjToExtension(maze, "/ff/ext/storeRefMaze", function(m) {
+	         var str = js_beautify(JSON.stringify(m), {
+	            indent_size: 4,
+	            indent_char: '&nbsp;',
+	            linefeed_char: '<br>'
+	         });
+	         el.innerHTML = "<br><div class = 'well blue'>RefMaze was created in the  " +
+	         m.ffRL + " Collection with data: " +
+	         str + "</div>";
+	         //console.log("RefMaze was created: " + JSON.stringify(resp));
+         }, function(code, msg) {
+            el.innerHTML = "<br><div class = 'well red'>Got an error: " + msg + "</div>";
+            console.error("StoreRefMaze() createObjAtUri Error: " + code + " " + msg);
+         });
+      }, function(code, msg) {
+         console.error("Error logging in: " + code + ", error message" + msg);
+      });
   }
 </script>
 <script type="text/javascript">

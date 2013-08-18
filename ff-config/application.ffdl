@@ -23,6 +23,9 @@ CREATE ALIAS ON OBJECTTYPE FFUser GRABBAG BackReferences.FFUserGroup.users AS me
 CREATE OBJECTTYPE FFUserGroup (groupName STRING, users GRABBAG /FFUser)
 CREATE OBJECTTYPE FFNotificationID (idType STRING, idValue STRING)
 CREATE OBJECTTYPE Note (subject STRING, note STRING, imageData BYTEARRAY, thumbnail BYTEARRAY)
+CREATE OBJECTTYPE Location (gridX NUMERIC, gridY NUMERIC, gridLabel STRING)
+CREATE OBJECTTYPE Maze (mazeName STRING, locations Location[])
+CREATE OBJECTTYPE RefMaze (mazeName STRING, locations GRABBAG /Locations)
 
 #
 # Collection Resources
@@ -31,6 +34,9 @@ CREATE COLLECTION /FFUser OBJECTTYPE FFUser
 CREATE COLLECTION /FFUserGroup OBJECTTYPE FFUserGroup
 CREATE COLLECTION /FFNotificationID OBJECTTYPE FFNotificationID
 CREATE COLLECTION /Notes OBJECTTYPE Note
+CREATE COLLECTION /Mazes OBJECTTYPE Maze
+CREATE COLLECTION /RefMazes OBJECTTYPE RefMaze
+CREATE COLLECTION /Locations OBJECTTYPE Location
 
 #
 # Event Handlers
@@ -40,4 +46,5 @@ CREATE COLLECTION /Notes OBJECTTYPE Note
 #
 CREATE EXTENSION /cleanup AS javascript:require('scripts/NotesExtensions.js').cleanup();
 CREATE EXTENSION /storeArrayOfNotes AS javascript:require('scripts/NotesExtensions.js').storeArrayOfNotes();
+CREATE EXTENSION /storeRefMaze AS javascript:require('scripts/NotesExtensions.js').storeRefMaze();
 
