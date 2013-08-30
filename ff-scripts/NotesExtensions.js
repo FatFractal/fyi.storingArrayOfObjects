@@ -3,30 +3,10 @@ var ff = require('ffef/FatFractal');
 
 exports.cleanup = function() {
     var count = 0;
-    var notes = ff.getArrayFromUri("/Notes");
-    if (notes == null) return;
-    for (var i = 0; i < notes.length; i++) {
-        ff.deleteObj(notes[i]);
-        count ++;
-    }
-    var mazes = ff.getArrayFromUri("/Mazes");
-    if (mazes == null) return;
-    for (var i = 0; i < mazes.length; i++) {
-        ff.deleteObj(mazes[i]);
-        count ++;
-    }
-    var refMazes = ff.getArrayFromUri("/RefMazes");
-    if (refMazes == null) return;
-    for (var i = 0; i < refMazes.length; i++) {
-        ff.deleteObj(refMazes[i]);
-        count ++;
-    }
-    var locations = ff.getArrayFromUri("/Locations");
-    if (locations == null) return;
-    for (var i = 0; i < locations.length; i++) {
-        ff.deleteObj(locations[i]);
-        count ++;
-    }
+    count += ff.deleteAllForQuery("/Notes", "system");
+    count += ff.deleteAllForQuery("/Mazes", "system");
+    count += ff.deleteAllForQuery("/RefMazes", "system");
+    count += ff.deleteAllForQuery("/Locations", "system");
     var r = ff.response();
     r.result = "<h1> Thanks for visiting</h1><p>We have deleted  " + count + " objects from the tests.</p>";
     r.responseCode="200";
