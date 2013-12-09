@@ -1,7 +1,7 @@
 fyi.storingArrayOfObjects
 =========================
 
-This sample applicaiton demonstrates how to store and array of objects with a single API call.
+This sample application demonstrates how to store and array of objects with a single API call.
 
 See the working application <a href = http://fyi.fatfractal.com/storingArrayOfObjects/ target = _blank>here</a>
 
